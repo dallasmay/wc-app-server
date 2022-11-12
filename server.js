@@ -20,6 +20,10 @@ const {
 } = require("./controller");
 
 // ENDPOINTS
+app.get("/", (req, res) => {
+  res.status(200).send("Please work")
+})
+
 app.get("/seed", seed);
 
 app.post("/user", getUserInfo);
