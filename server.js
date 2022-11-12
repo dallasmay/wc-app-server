@@ -21,7 +21,11 @@ const {
 
 // ENDPOINTS
 app.get("/", (req, res) => {
-  res.status(200).send("Please work")
+  res.status(200).send("This is the / route")
+})
+
+app.get("/test", (req, res) => {
+  res.status(200).send("This the /test route");
 })
 
 app.get("/seed", seed);
