@@ -20,12 +20,12 @@ const {
 } = require("./controller");
 
 // ENDPOINTS
-app.get("/", (req, res) => {
-  res.status(200).send("This is the / route")
-})
-
 app.get("/test", (req, res) => {
   res.status(200).send("This the /test route");
+})
+
+app.get("/", (req, res) => {
+  res.status(200).send("This is the / route")
 })
 
 app.get("/seed", seed);
