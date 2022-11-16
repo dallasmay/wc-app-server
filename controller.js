@@ -108,7 +108,14 @@ module.exports = {
       .then((dbRes) => {
         res.status(200).send(dbRes[0][0]);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        if (err.name === "SequelizeUniqueConstraintError") {
+          res.status(400).send("Teamname Already Taken");
+        } else {
+          res.status(400).send(err);
+        }
+        console.log(err);
+      });
   },
   getUserInfo: (req, res) => {
     const { userId } = req.body;
@@ -170,28 +177,66 @@ module.exports = {
         console.log(err);
       });
   },
+  setGroupAsSeen: (req, res) => {
+    const { userId, groupLetter } = req.body;
+    const group = `${groupLetter}_is_seen`;
+
+    sequelize
+      .query(
+        `UPDATE users
+        SET ${group} = true
+        WHERE id = '${userId}'
+        RETURNING a_is_seen, b_is_seen, c_is_seen, d_is_seen, e_is_seen, f_is_seen, g_is_seen, h_is_seen;`
+      )
+      .then((dbRes) => {
+        res.status(200).send(dbRes[0]);
+      })
+      .catch((err) => console.log(err));
+  },
   getGroupStageChoices: (req, res) => {
     const { userId } = req.body;
 
-    // sequelize
-    //   .query(
-    //     `SELECT group_letter, country_id, position FROM brackets WHERE user_id = '${userId}'`
-    //   )
-    //   .then((dbRes) => {
-    //     res.status(200).send(dbRes);
-    //   })
-    //   .catch((err) => console.log(err));
     sequelize
       .query(
-        `SELECT group_letter, position, name, abbr, fifa_rank, c.id 
+        `SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
           FROM brackets AS b
           INNER JOIN countries AS c
           ON b.country_id = c.id
-          WHERE b.user_id = '${userId}'
-          ORDER BY group_letter ASC, position ASC`
+          WHERE b.user_id = '${userId}' AND round = 'group'
+          ORDER BY group_letter ASC, position ASC;
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE b.user_id = '${userId}' AND round = 'ro16'
+          ORDER BY group_letter ASC, game_number ASC;
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE b.user_id = '${userId}' AND round = 'qua'
+          ORDER BY game_number ASC;
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE (b.user_id = '${userId}' AND round = 'sem')
+          OR (b.user_id = '${userId}' AND round = 'cons')
+          ORDER BY round DESC, game_number ASC;
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE (b.user_id = '${userId}' AND round = 'final')
+          OR (b.user_id = '${userId}' AND round = 'wCons')
+          ORDER BY game_number ASC;`
       )
       .then((dbRes) => {
-        res.status(200).send(dbRes);
+        res.status(200).send(dbRes[1]);
       })
       .catch((err) => console.log(err));
   },
@@ -199,11 +244,27 @@ module.exports = {
     const { userId, countriesArr } = req.body;
     const groupLetter = countriesArr[0].group_letter;
 
+    const groupADeletePath = "49, 51, 57, 59, 61, 62, 63, 64";
+
+    const deletePath =
+      groupLetter === "a" || groupLetter === "b"
+        ? "49, 51, 57, 59, 61, 62, 63, 64"
+        : groupLetter === "c" || groupLetter === "d"
+        ? "50, 52, 57, 59, 61, 62, 63, 64"
+        : groupLetter === "e" || groupLetter === "f"
+        ? "53, 55, 58, 60, 61, 62, 63, 64"
+        : groupLetter === "g" || groupLetter === "h"
+        ? "54, 56, 58, 60, 61, 62, 63, 64"
+        : "";
     sequelize
       .query(
         `DELETE
          FROM brackets
          WHERE user_id = '${userId}' AND group_letter = '${groupLetter}';
+
+         DELETE
+         FROM brackets
+         WHERE user_id = '${userId}' AND game_number IN (${deletePath});
          
          INSERT INTO brackets (user_id, round, group_letter, country_id, position)
         VALUES ('${userId}', 'group', '${groupLetter}', '${countriesArr[0].id}', '1'),
@@ -215,12 +276,203 @@ module.exports = {
           FROM brackets AS b
           INNER JOIN countries AS c
           ON b.country_id = c.id
-          WHERE b.user_id = '${userId}'
-          ORDER BY group_letter ASC, position ASC;`
+          WHERE b.user_id = '${userId}' AND round = 'group'
+          ORDER BY group_letter ASC, position ASC;
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE b.user_id = '${userId}' AND round = 'ro16'
+          ORDER BY group_letter ASC, game_number ASC;
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE b.user_id = '${userId}' AND round = 'qua'
+          ORDER BY game_number ASC;`
       )
+      .then((dbRes) => {
+        res.status(200).send(dbRes[1]);
+      })
+      .catch((err) => console.log(err));
+  },
+  setRo16Choice: (req, res) => {
+    const { userId, winner, gameNum } = req.body;
+    const { group_letter, id, position } = winner;
+
+    const deletePath =
+      gameNum === 49 || gameNum === 50
+        ? "57, 61, 63, 64"
+        : gameNum === 51 || gameNum === 52
+        ? "59, 62, 63, 64"
+        : gameNum === 53 || gameNum === 54
+        ? "58, 61, 63, 64"
+        : gameNum === 55 || gameNum === 56
+        ? "60, 62, 63, 64"
+        : "";
+
+    sequelize
+      .query(
+        `DELETE
+       FROM brackets
+       WHERE user_id = '${userId}' AND game_number = '${gameNum}';
+
+       DELETE
+         FROM brackets
+         WHERE user_id = '${userId}' AND game_number IN (${deletePath});
+       
+       INSERT INTO brackets (user_id, round, group_letter, game_number, country_id, position)
+      VALUES ('${userId}', 'ro16', '${group_letter}', '${gameNum}', '${id}', '${position}');
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE b.user_id = '${userId}' AND round = 'ro16'
+          ORDER BY group_letter ASC, game_number ASC;
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE b.user_id = '${userId}' AND round = 'qua'
+          ORDER BY game_number ASC;
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE (b.user_id = '${userId}' AND round = 'sem')
+          OR (b.user_id = '${userId}' AND round = 'cons')
+          ORDER BY round DESC, game_number ASC;`
+      )
+      .then((dbRes) => {
+        // res.status(200).send(dbRes[0]);
+        res.status(200).send(dbRes[1]);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  },
+  setQuarterfinalsChoice: (req, res) => {
+    const { userId, winner, gameNum } = req.body;
+    const { group_letter, id, position } = winner;
+    console.log(userId, winner, gameNum, group_letter, id, position);
+
+    const deletePath =
+      gameNum === 57 || gameNum === 58
+        ? "61, 63, 64"
+        : gameNum === 59 || gameNum === 60
+        ? "62, 63, 64"
+        : "";
+
+    sequelize
+      .query(
+        `DELETE
+       FROM brackets
+       WHERE user_id = '${userId}' AND game_number = '${gameNum}';
+       
+       DELETE
+       FROM brackets
+       WHERE user_id = '${userId}' AND game_number IN (${deletePath});
+       
+       INSERT INTO brackets (user_id, round, group_letter, game_number, country_id, position)
+      VALUES ('${userId}', 'qua', '${group_letter}', '${gameNum}', '${id}', '${position}');
+      
+      SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE b.user_id = '${userId}' AND round = 'qua'
+          ORDER BY game_number ASC;
+          
+          SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE (b.user_id = '${userId}' AND round = 'sem')
+          OR (b.user_id = '${userId}' AND round = 'cons')
+          ORDER BY round DESC, game_number ASC;`
+      )
+      .then((dbRes) => {
+        res.status(200).send(dbRes[1]);
+      })
+      .catch((err) => console.log(err));
+  },
+  setSemifinalsChoice: (req, res) => {
+    const { userId, winner, gameNum, runnerUp } = req.body;
+    const { group_letter, id, position } = winner;
+    const runnerUpId = runnerUp.id;
+    const runnerUpGroupLetter = runnerUp.group_letter;
+    const runnerUpPosition = runnerUp.position;
+
+    sequelize
+      .query(
+        `DELETE
+       FROM brackets
+       WHERE user_id = '${userId}' AND game_number = '${gameNum}';
+       
+       DELETE
+       FROM brackets
+       WHERE user_id = '${userId}' AND game_number IN (63, 64);
+       
+       INSERT INTO brackets (user_id, round, group_letter, game_number, country_id, position)
+      VALUES ('${userId}', 'sem', '${group_letter}', '${gameNum}', '${id}', '${position}'),
+      ('${userId}', 'cons', '${runnerUpGroupLetter}', '${gameNum}', '${runnerUpId}', '${runnerUpPosition}');
+      
+      SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE (b.user_id = '${userId}' AND round = 'sem')
+          OR (b.user_id = '${userId}' AND round = 'cons')
+          ORDER BY round DESC, game_number ASC;`
+      )
+      .then((dbRes) => {
+        res.status(200).send(dbRes[1]);
+      })
+      .catch((err) => console.log(err));
+  },
+  setFinalsChoices: (req, res) => {
+    const { userId, winner, gameNum } = req.body;
+    const { group_letter, id, position } = winner;
+
+    sequelize
+      .query(
+        `DELETE
+       FROM brackets
+       WHERE user_id = '${userId}' AND game_number = '${gameNum}';
+       
+       INSERT INTO brackets (user_id, round, group_letter, game_number, country_id, position)
+      VALUES ('${userId}', '${
+          gameNum === 64 ? "final" : gameNum === 63 ? "wCons" : ""
+        }', '${group_letter}', '${gameNum}', '${id}', '${position}');
+
+      
+      SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
+          FROM brackets AS b
+          INNER JOIN countries AS c
+          ON b.country_id = c.id
+          WHERE b.user_id = '${userId}' AND round = '${
+          gameNum === 64 ? "final" : gameNum === 63 ? "wCons" : ""
+        }';`
+      )
+      .then((dbRes) => {
+        res.status(200).send(dbRes[1]);
+      })
+      .catch((err) => console.log(err));
+  },
+  getLeaderBoard: (req, res) => {
+    sequelize
+      .query(`SELECT name, team_name, score FROM users ORDER BY score DESC`)
       .then((dbRes) => {
         res.status(200).send(dbRes[0]);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+        res.status(400).send("Server Error");
+      });
   },
 };

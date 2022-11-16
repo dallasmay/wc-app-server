@@ -17,17 +17,15 @@ const {
   setDefaultBracket,
   getGroupStageChoices,
   setGroupChoices,
+  setRo16Choice,
+  setQuarterfinalsChoice,
+  setSemifinalsChoice,
+  setGroupAsSeen,
+  setFinalsChoices,
+  getLeaderBoard,
 } = require("./controller");
 
 // ENDPOINTS
-app.get("/", (req, res) => {
-  res.status(200).send("This is the / route")
-})
-
-app.get("/test", (req, res) => {
-  res.status(200).send("This the /test route")
-})
-
 app.get("/seed", seed);
 
 app.post("/user", getUserInfo);
@@ -37,6 +35,17 @@ app.post("/bracket/default", setDefaultBracket);
 
 app.post("/bracket/group-stage", getGroupStageChoices);
 app.post("/bracket/set-group-stage", setGroupChoices);
+app.post("/bracket/group/set-as-seen", setGroupAsSeen);
+
+app.post("/bracket/ro16", setRo16Choice);
+
+app.post("/bracket/quarterfinals", setQuarterfinalsChoice);
+
+app.post("/bracket/semifinals", setSemifinalsChoice);
+
+app.post("/bracket/finals", setFinalsChoices);
+
+app.get("/leaderboard", getLeaderBoard);
 
 app.listen(SERVER_PORT, () => {
   console.log(`Server running on port ${SERVER_PORT}`);
