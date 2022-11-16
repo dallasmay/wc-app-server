@@ -210,7 +210,7 @@ module.exports = {
           INNER JOIN countries AS c
           ON b.country_id = c.id
           WHERE b.user_id = '${userId}' AND round = 'ro16'
-          ORDER BY group_letter ASC, game_number ASC;
+          ORDER BY game_number ASC;
           
           SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
           FROM brackets AS b
@@ -284,7 +284,7 @@ module.exports = {
           INNER JOIN countries AS c
           ON b.country_id = c.id
           WHERE b.user_id = '${userId}' AND round = 'ro16'
-          ORDER BY group_letter ASC, game_number ASC;
+          ORDER BY game_number ASC;
           
           SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
           FROM brackets AS b
@@ -331,7 +331,7 @@ module.exports = {
           INNER JOIN countries AS c
           ON b.country_id = c.id
           WHERE b.user_id = '${userId}' AND round = 'ro16'
-          ORDER BY group_letter ASC, game_number ASC;
+          ORDER BY game_number ASC;
           
           SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
           FROM brackets AS b
