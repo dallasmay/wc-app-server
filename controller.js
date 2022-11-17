@@ -18,7 +18,11 @@ module.exports = {
         id VARCHAR(50) PRIMARY KEY NOT NULL UNIQUE,
         name VARCHAR(100) NOT NULL,
         team_name VARCHAR(100) UNIQUE,
-        score INT DEFAULT 0,
+        group_score INT DEFAULT 0,
+        ro16_score INT DEFAULT 0,
+        quarter_score INT DEFAULT 0,
+        semi_score INT DEFAULT 0,
+        final_score INT DEFAULT 0,
         a_is_seen BOOL DEFAULT false,
         b_is_seen BOOL DEFAULT false,
         c_is_seen BOOL DEFAULT false,
@@ -122,7 +126,7 @@ module.exports = {
 
     sequelize
       .query(
-        `SELECT team_name, score, a_is_seen, b_is_seen, c_is_seen, d_is_seen, e_is_seen, f_is_seen, g_is_seen, h_is_seen FROM users WHERE id = '${userId}'`
+        `SELECT team_name, (group_score + ro16_score + quarter_score + semi_score + final_score) AS score, a_is_seen, b_is_seen, c_is_seen, d_is_seen, e_is_seen, f_is_seen, g_is_seen, h_is_seen FROM users WHERE id = '${userId}'`
       )
       .then((dbRes) => {
         console.log(dbRes);
@@ -278,7 +282,7 @@ module.exports = {
           ON b.country_id = c.id
           WHERE b.user_id = '${userId}' AND round = 'group'
           ORDER BY group_letter ASC, position ASC;
-          
+
           SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
           FROM brackets AS b
           INNER JOIN countries AS c
@@ -325,7 +329,7 @@ module.exports = {
        
        INSERT INTO brackets (user_id, round, group_letter, game_number, country_id, position)
       VALUES ('${userId}', 'ro16', '${group_letter}', '${gameNum}', '${id}', '${position}');
-          
+
           SELECT group_letter, position, name, abbr, fifa_rank, c.id, round, game_number 
           FROM brackets AS b
           INNER JOIN countries AS c
@@ -466,7 +470,9 @@ module.exports = {
   },
   getLeaderBoard: (req, res) => {
     sequelize
-      .query(`SELECT name, team_name, score FROM users ORDER BY score DESC`)
+      .query(
+        `SELECT name, team_name, (group_score + ro16_score + quarter_score + semi_score + final_score) AS score FROM users ORDER BY score DESC`
+      )
       .then((dbRes) => {
         res.status(200).send(dbRes[0]);
       })

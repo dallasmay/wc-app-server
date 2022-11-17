@@ -26,7 +26,7 @@ const {
 } = require("./controller");
 
 // ENDPOINTS
-app.get("/seed", seed);
+// app.get("/seed", seed);
 
 app.post("/user", getUserInfo);
 app.post("/register", registerUser);
