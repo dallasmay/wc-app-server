@@ -126,11 +126,17 @@ module.exports = {
 
     sequelize
       .query(
-        `SELECT team_name, (group_score + ro16_score + quarter_score + semi_score + final_score) AS score, a_is_seen, b_is_seen, c_is_seen, d_is_seen, e_is_seen, f_is_seen, g_is_seen, h_is_seen FROM users WHERE id = '${userId}'`
+        `SELECT team_name, (group_score + ro16_score + quarter_score + semi_score + final_score) AS score, a_is_seen, b_is_seen, c_is_seen, d_is_seen, e_is_seen, f_is_seen, g_is_seen, h_is_seen FROM users WHERE id = '${userId}';
+        
+        SELECT id, (group_score + ro16_score + quarter_score + semi_score + final_score) AS score FROM users ORDER BY score DESC;`
       )
       .then((dbRes) => {
-        console.log(dbRes);
-        res.status(200).send(dbRes[0][0]);
+        let scoreArr = dbRes[1][1].rows;
+        let entry = scoreArr.find((ele) => {
+          return ele.id === userId;
+        });
+        let rank = scoreArr.indexOf(entry) + 1;
+        res.status(200).send([dbRes[0][0], rank]);
       })
       .catch((err) => console.log(err));
   },
