@@ -29,21 +29,21 @@ const {
 // app.get("/seed", seed);
 
 app.post("/user", getUserInfo);
-app.post("/register", registerUser);
-app.post("/team", setTeamName);
-app.post("/bracket/default", setDefaultBracket);
+// app.post("/register", registerUser);
+// app.post("/team", setTeamName);
+// app.post("/bracket/default", setDefaultBracket);
 
 app.post("/bracket/group-stage", getGroupStageChoices);
-app.post("/bracket/set-group-stage", setGroupChoices);
-app.post("/bracket/group/set-as-seen", setGroupAsSeen);
+// app.post("/bracket/set-group-stage", setGroupChoices);
+// app.post("/bracket/group/set-as-seen", setGroupAsSeen);
 
-app.post("/bracket/ro16", setRo16Choice);
+// app.post("/bracket/ro16", setRo16Choice);
 
-app.post("/bracket/quarterfinals", setQuarterfinalsChoice);
+// app.post("/bracket/quarterfinals", setQuarterfinalsChoice);
 
-app.post("/bracket/semifinals", setSemifinalsChoice);
+// app.post("/bracket/semifinals", setSemifinalsChoice);
 
-app.post("/bracket/finals", setFinalsChoices);
+// app.post("/bracket/finals", setFinalsChoices);
 
 app.get("/leaderboard", getLeaderBoard);
 
