@@ -23,6 +23,7 @@ const {
   setGroupAsSeen,
   setFinalsChoices,
   getLeaderBoard,
+  getOtherTeam,
 } = require("./controller");
 
 // ENDPOINTS
@@ -46,6 +47,7 @@ app.post("/bracket/group-stage", getGroupStageChoices);
 // app.post("/bracket/finals", setFinalsChoices);
 
 app.get("/leaderboard", getLeaderBoard);
+app.post("/leaderboard/other-team", getOtherTeam);
 
 app.listen(SERVER_PORT, () => {
   console.log(`Server running on port ${SERVER_PORT}`);
